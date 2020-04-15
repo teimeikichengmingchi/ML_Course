@@ -55,7 +55,7 @@ def ml_loop():
                 (scene_info.ball[0] + 400 - scene_info.ball[1] > scene_info.platform[0] + 35):
                 Rmove = True
                 Lmove = False
-                if scene_info.ball[0] + 400 - scene_info.ball[1] > 300:
+                if scene_info.ball[0] + 400 - scene_info.ball[1] > 250:
                     if scene_info.platform[0] + 20 < 100:
                         Rmove = True
                         Lmove = False
@@ -66,7 +66,7 @@ def ml_loop():
                 (scene_info.ball[0] + 400 - scene_info.ball[1] < scene_info.platform[0] + 5):
                 Lmove = True
                 Rmove = False
-                if scene_info.ball[0] + 400 - scene_info.ball[1] < -100:
+                if scene_info.ball[0] + 400 - scene_info.ball[1] < -50:
                     if scene_info.platform[0] + 20 < 100:
                         Rmove = True
                         Lmove = False
