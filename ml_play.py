@@ -63,6 +63,7 @@ def ml_loop():
                         Lmove = True
                         Rmove = False
             elif  rate[0] > 0 and \
+                rate[1] > 0 and \
                 (scene_info.ball[0] + 400 - scene_info.ball[1] < scene_info.platform[0] + 5):
                 Lmove = True
                 Rmove = False
@@ -78,6 +79,7 @@ def ml_loop():
                         Lmove = True
                         Rmove = False
             elif rate[0] < 0 and \
+                rate[1] > 0 and \
                 (scene_info.ball[0] + 400 - scene_info.ball[1] > scene_info.platform[0] + 35):
                 Rmove = True
                 Lmove = False
