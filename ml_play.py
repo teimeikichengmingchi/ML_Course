@@ -48,23 +48,24 @@ def ml_loop():
 
         # 3.3. Put the code here to handle the scene information
 
-        y = (395 - scene_info.ball[1]) / rate[1]
-        x = scene_info.ball[0] + rate[0] * y
-        while x < 0 or x > 200:
-            if x < 0:
-                x = -x
-            else :
-                x = 400 - x
+        if scene_info.ball[1] != 395:
+            y = (395 - scene_info.ball[1]) / rate[1]
+            x = scene_info.ball[0] + rate[0] * y
+            while x < 0 or x > 200:
+                if x < 0:
+                    x = -x
+                else :
+                    x = 400 - x
 
-        if scene_info.platform[0] + 35 < x:
-            Rmove = True
-            Lmove = False
-        elif scene_info.platform[0] + 5 > x:
-            Lmove = True
-            Rmove = False
-        else:
-            Lmove = False
-            Rmove = False
+            if scene_info.platform[0] + 35 < x:
+                Rmove = True
+                Lmove = False
+            elif scene_info.platform[0] + 5 > x:
+                Lmove = True
+                Rmove = False
+            else:
+                Lmove = False
+                Rmove = False
         
         
         
