@@ -24,7 +24,7 @@ def ml_loop():
     
     Rmove = False
     Lmove = False
-    s = [93, 93]
+    s = [0, 0]
 
     # 2. Inform the game process that ml process is ready before start the loop.
     comm.ml_ready()
@@ -33,7 +33,8 @@ def ml_loop():
     while True:
         # 3.1. Receive the scene information sent from the game process.
         scene_info = comm.get_scene_info()
-        rate = [scene_info.ball[0] - s[0], scene_info.ball[1] - s[1]]
+        if s != [0, 0]:
+            rate = [scene_info.ball[0] - s[0], scene_info.ball[1] - s[1]]
 
         # 3.2. If the game is over or passed, the game process will reset
         #      the scene and wait for ml process doing resetting job.
@@ -66,7 +67,8 @@ def ml_loop():
                 Lmove = True
                 Rmove = False
 
-        s = scene_info.ball
+        s[0] = scene_info.ball[0]
+        s[1] = scene_info.ball[1]
                     
 
         # 3.4. Send the instruction for this frame to the game process
