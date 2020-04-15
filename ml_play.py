@@ -73,6 +73,8 @@ def ml_loop():
 
         # 3.4. Send the instruction for this frame to the game process
         if Lmove:
-            comm.send_instruction(scene_info.frame, PlatformAction.SERVE_TO_LEFT)
-        else:
             comm.send_instruction(scene_info.frame, PlatformAction.MOVE_LEFT)
+        elif Rmove:
+            comm.send_instruction(scene_info.frame, PlatformAction.MOVE_RIGHT)
+        else:
+            comm.send_instruction(scene_info.frame, PlatformAction.NONE)
