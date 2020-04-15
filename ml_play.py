@@ -22,7 +22,7 @@ def ml_loop():
     # === Here is the execution order of the loop === #
     # 1. Put the initialization code here.
     
-    #Rmove = False
+    Rmove = False
     Lmove = False
     s = [93, 93]
 
@@ -46,22 +46,25 @@ def ml_loop():
             continue
 
         # 3.3. Put the code here to handle the scene information
-        if scene_info.ball[1] > 170:
+        if scene_info.ball[1] == 395:
+            Rmove = False
+            Lmove = False
+        elif scene_info.ball[1] > 170:
             if  rate[0] > 0 and \
                 (scene_info.ball[0] + 400 - scene_info.ball[1] > scene_info.platform[0] + 20):
-                #Rmove = True
+                Rmove = True
                 Lmove = False
             elif rate[0] < 0 and \
                 (scene_info.ball[0] + 400 - scene_info.ball[1] < scene_info.platform[0]):
                 Lmove = True
-                #Rmove = False
+                Rmove = False
         else:
             if scene_info.platform[0] + 20 < 100:
-                #Rmove = True
+                Rmove = True
                 Lmove = False
             else:
                 Lmove = True
-                #Rmove = False
+                Rmove = False
 
         s = scene_info.ball
                     
