@@ -59,7 +59,7 @@ def ml_loop():
         if scene_info.platform[0] + 35 < x:
             Rmove = True
             Lmove = False
-        else if scene_info.platform[0] + 5 > x:
+        elif scene_info.platform[0] + 5 > x:
             Lmove = True
             Rmove = False
         else:
