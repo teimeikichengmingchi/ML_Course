@@ -57,10 +57,10 @@ def ml_loop():
                 else :
                     x = 400 - x
 
-            if scene_info.platform[0] + 35 < x:
+            if scene_info.platform[0] + 30 < x:
                 Rmove = True
                 Lmove = False
-            elif scene_info.platform[0] + 5 > x:
+            elif scene_info.platform[0] + 10 > x:
                 Lmove = True
                 Rmove = False
             else:
