@@ -211,10 +211,10 @@ class MLPlay:
                         pos_1.update(car)
                         break
             if len(pos_2) != 0:
-                if self.car_pos[1] - pos_2["pos"][1] - 80 <=  20 + 4 * (self.car_vel + 1.7 - pos_2["velocity"]):
+                if self.car_pos[1] - pos_2["pos"][1] - 80 <=  5 + 8 * (self.car_vel + 1.7 - pos_2["velocity"]):
                     follow(pos_2)
             if len(pos_4) != 0:
-                if self.car_pos[1] - pos_4["pos"][1] - 80 <=  20 + 4 * (self.car_vel + 1.7 - pos_4["velocity"]):
+                if self.car_pos[1] - pos_4["pos"][1] - 80 <=  5 + 8 * (self.car_vel + 1.7 - pos_4["velocity"]):
                     follow(pos_4)
             if "MOVE_RIGHT" in self.returnArr and len(pos_3) > 0:
                 if len(pos_4) != 0:#both of pos4 and pos3 are occupied
@@ -336,7 +336,7 @@ class MLPlay:
             """
             return None
         def follow(car):
-            if (self.car_pos[1] - 40) - (car["pos"][1] + 40) <= 20 + 4 * (self.car_vel - car["velocity"] + 1.7):
+            if (self.car_pos[1] - 40) - (car["pos"][1] + 40) <= 5 + 8 * (self.car_vel - car["velocity"] + 1.7):
                 if self.car_vel > car["velocity"] - 5:
                     if "SPEED" in self.returnArr:
                         self.returnArr.remove("SPEED")
