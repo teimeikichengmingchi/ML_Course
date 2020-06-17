@@ -99,10 +99,10 @@ class MLPlay:
                                 if abs(self.car_pos[0] - car[0]) > 1:
                                     if self.car_pos[0] - car[0] > 0:
                                         self.returnArr.append("MOVE_LEFT")
-                                        print("MOVE_LEFT")
+                                        #print("MOVE_LEFT")
                                     else:
                                         self.returnArr.append("MOVE_RIGHT")
-                                        print("MOVE_RIGHT")
+                                        #print("MOVE_RIGHT")
             """
             if "MOVE_RIGHT" in self.returnArr:
                 for car in scene_info["cars_info"]:
