@@ -1,267 +1,367 @@
-"""
-The template of the script for the machine learning process in game pingpong
-"""
+class MLPlay:
+    def __init__(self, player):
+        self.player = player
+        if self.player == "player1":
+            self.player_no = 0
+        elif self.player == "player2":
+            self.player_no = 1
+        elif self.player == "player3":
+            self.player_no = 2
+        elif self.player == "player4":
+            self.player_no = 3
+        self.car_vel = 0
+        self.car_pos = ()
+        self.next_coin = ()
+        self.coin_num = 0
+        self.computer_cars = []
+        self.other_players = []
+        self.coins_pos = []
+        self.pos_1 = {}
+        self.pos_2 = {}
+        self.pos_3 = {}
+        self.pos_4 = {}
+        self.returnArr = []
+        print("Initial ml script")
 
-# Import the necessary modules and classes
-from mlgame.communication import ml as comm
-import random
-
-def ml_loop(side: str):
-    """
-    The main loop for the machine learning process
-    The `side` parameter can be used for switch the code for either of both sides,
-    so you can write the code for both sides in the same script. Such as:
-    ```python
-    if side == "1P":
-        ml_loop_for_1P()
-    else:
-        ml_loop_for_2P()
-    ```
-    @param side The side which this script is executed for. Either "1P" or "2P".
-    """
-
-    # === Here is the execution order of the loop === #
-    # 1. Put the initialization code here
-    ball_served = False
-
-    blocker_record = 0
-
-    def move_to(player, pred) : #move platform to predicted position to catch ball 
-        if player == '1P':
-            if scene_info["platform_1P"][0]+20 == pred: return 0 # NONE
-            elif scene_info["platform_1P"][0]+20 < pred : return 1 # goes right
-            else : return 2 # goes left
-        else :
-            if scene_info["platform_2P"][0]+20 == pred: return 0 # NONE
-            elif scene_info["platform_2P"][0]+20 < pred : return 1 # goes right
-            else : return 2 # goes left
-
-    def ml_loop_for_1P(): 
-        ball_x = scene_info["ball"][0]
-        ball_y = scene_info["ball"][1]
-        ball_speed_x = scene_info["ball_speed"][0]
-        ball_speed_y = scene_info["ball_speed"][1]
-        if ball_y > 260 : #下半部
-            if ball_speed_y > 0:#求向下
-                x = ((415 - ball_y) // ball_speed_y) +1 # 幾個frame以後會需要接  # x means how many frames before catch the ball
-                pred = ball_x+(ball_speed_x*x)  # 預測最終位置 # pred means predict ball landing site 
-                while True:
-                    if pred > 195:
-                        pred = 390 - pred
-                    elif pred < 0:
-                        pred = (-pred)
-                    else:
+    def find_coin(self):
+        pick_this_coin = False
+        removed = False
+        self.next_coin = ()
+        self.coins_pos.sort(key = lambda coin : coin[1])
+        for coin in self.coins_pos:
+            removed = False
+            if self.car_pos[1] - coin[1] < 80:
+                for com_car in self.computer_cars:
+                    if coin[1] - com_car[1] < 50 and coin[1] - com_car[1] > 10 and abs(coin[0] - com_car[0]) < 40 \
+                        and abs(self.car_pos[0] - coin[0]) - 25 < 15 and abs(self.car_pos[1] - coin[1]) - 45 < 20:
+                        #if self.player_no == 0:
+                            #print(coin, " : removed   0")
+                        self.coins_pos.remove(coin)
+                        removed = True
                         break
-            else:#球向上
-                x = ((ball_y - 260) // (-ball_speed_y)) + 1 + (155//(-ball_speed_y)) + 1
-                pred = ball_x+(ball_speed_x*x)  # 預測最終位置 # pred means predict ball landing site 
-                while True:
-                    if pred > 195:
-                        pred = 390 - pred
-                    elif pred < 0:
-                        pred = (-pred)
-                    else:
-                        break
-        else:
-            if ball_speed_y<0:#ball going on
-                t1 = ((ball_y-80)//(-ball_speed_y))+((155)//(-ball_speed_y))
-                t2 = ((ball_y-80)//(-ball_speed_y))+((180)//(-ball_speed_y))
-                if ((ball_y - 80) % ball_speed_y != 0):
-                    t1 = t1 + 1
-                    t2 = t2 + 1
-                if 180 % ball_speed_y != 0:
-                    t1 = t1 + 1
-                y1 = 80 + ((155)//(-ball_speed_y)) *(-ball_speed_y)
-                y2 = 80 + ((180)//(-ball_speed_y))*(-ball_speed_y)
-                if 180 % ball_speed_y != 0:
-                    y2 = y2 - ball_speed_y
-                x1 = ball_x+(ball_speed_x*t1)
-                x2 = ball_x+(ball_speed_x*t2)
-                while True:
-                    if x1 > 195:
-                        x1 = 390 - x1
-                    elif x1 < 0:
-                        x1 = (-x1)
-                    else:
-                        break
-                while True:
-                    if x2 > 195:
-                        x2 = 390 - x2
-                    elif x2 < 0:
-                        x2 = (-x2)
-                    else:
-                        break
-                b_speed = scene_info["blocker"][0] - blocker_record
-                b1 = scene_info["blocker"][0] + b_speed*t1
-                b2 = scene_info["blocker"][0] + b_speed*t2
-                minB = 200
-                maxB = 0
-                if b1 > 170:
-                    b1 = 240 - b1
-                    maxB = 200
-                elif b1 < 0:
-                    b1 = (-b1)
-                    minB = 0
-                if b2 > 170:
-                    b2 = 240 - b2
-                    maxB = 200
-                elif b2 < 0:
-                    b2 = (-b2)
-                    minB = 0
-                if maxB != 200:
-                    maxB = max(b1, b2) + 30
-                if minB != 0:
-                    minB = min(b1, b2)
-                
-                if x2 > minB and minB > x1:
-                    x = ((415-((y1 + y2) / 2))//(-ball_speed_y))+1
-                    pred = ((x2 + x1) / 2) + x*(-(abs(ball_speed_x)))
-                elif x1 > maxB and maxB > x2:
-                    x = ((415-((y1 + y2) / 2))//(-ball_speed_y))+1
-                    pred = ((x2 + x1) / 2) + x*(abs(ball_speed_x))
-                else:
-                    x = (335//(-ball_speed_y))+((ball_y - 80)//(-ball_speed_y))+1
-                    pred = ball_x+(ball_speed_x*x)
-                while True:
-                    if pred > 195:
-                        pred = 390 - pred
-                    elif pred < 0:
-                        pred = (-pred)
-                    else:
-                        break
-            else:
-                t1 = (235 - ball_y)//ball_speed_y
-                t2 = (260 - ball_y)//ball_speed_y
-                if ((260 - ball_y) % ball_speed_y != 0):
-                    t2 = t2 + 1
-                y1 = ball_y +(ball_speed_y*t1)
-                y2 = ball_y +(ball_speed_y*t2)
-                if ((260 - ball_y) % ball_speed_y != 0):
-                    y2 = y2 + ball_speed_y
-                x1 = ball_x+(ball_speed_x*t1)
-                x2 = ball_x+(ball_speed_x*t2)
-                while True:
-                    if x1 > 195:
-                        x1 = 390 - x1
-                    elif x1 < 0:
-                        x1 = (-x1)
-                    else:
-                        break
-                while True:
-                    if x2 > 195:
-                        x2 = 390 - x2
-                    elif x2 < 0:
-                        x2 = (-x2)
-                    else:
-                        break
-                b_speed = scene_info["blocker"][0] - blocker_record
-                b1 = scene_info["blocker"][0] + b_speed*t1
-                b2 = scene_info["blocker"][0] + b_speed*t2
-                minB = 200
-                maxB = 0
-                if b1 > 170:
-                    b1 = 240 - b1
-                    maxB = 200
-                elif b1 < 0:
-                    b1 = (-b1)
-                    minB = 0
-                if b2 > 170:
-                    b2 = 240 - b2
-                    maxB = 200
-                elif b2 < 0:
-                    b2 = (-b2)
-                    minB = 0
-                if maxB != 200:
-                    maxB = max(b1, b2) + 30
-                if minB != 0:
-                    minB = min(b1, b2)
-                if x2 > minB and minB > x1:
-                    x = ((415-((y1+y2)/2))//ball_speed_y)+1
-                    pred = ((x2 + x1) / 2) + x*(-(abs(ball_speed_x)))
-                elif x1 > maxB and maxB > x2:
-                    x = ((415-((y1+y2)/2))//ball_speed_y)+1
-                    pred = ((x2 + x1) / 2) + x*(abs(ball_speed_x))
-                else:
-                    x = ((415 - ball_y)//ball_speed_y) + 1
-                    pred = ball_x+(ball_speed_x*x)
-                while True:
-                    if pred > 195:
-                        pred = 390 - pred
-                    elif pred < 0:
-                        pred = (-pred)
-                    else:
-                        break
-        return move_to(player = '1P',pred = pred)
-
-
-
-
-    def ml_loop_for_2P():  # as same as 1P
-        ball_x = scene_info["ball"][0]
-        ball_y = scene_info["ball"][1]
-        ball_speed_x = scene_info["ball_speed"][0]
-        ball_speed_y = scene_info["ball_speed"][1]
-        if scene_info["ball_speed"][1] > 0 : 
-            x = ((418 - ball_y) // ball_speed_y) + (335 // ball_speed_y) + 2
-            pred = ball_x+(ball_speed_x*x)
-            while True:
-                if pred > 198:
-                    pred = 396 - pred
-                elif pred < 3:
-                    pred = 6 - pred
-                else:
+                if removed:
+                    continue
+            if abs(self.car_pos[0] - coin[0]) > 140 and (self.car_pos[1] - coin[1] + 45) > 0 \
+                 and abs(self.car_pos[0] - coin[0] - 25) / (self.car_pos[1] - coin[1] + 45) > (65 / 100): # > (2 / 10)
+                #if self.player_no == 0:
+                    #print(coin, " : removed   1")
+                self.coins_pos.remove(coin)
+                removed = True
+            if removed:
+                continue
+            for player_car in self.other_players:
+                if (coin[0] > player_car[0] and player_car[0] > self.car_pos[0] and (player_car[1] - self.car_pos[1] < 82)) or \
+                     (coin[0] < player_car[0] and player_car[0] < self.car_pos[0] and (player_car[1] - self.car_pos[1] < 82)) or \
+                     (abs(coin[0] - player_car[0]) < 15 and (player_car[1] - self.car_pos[1] < 82)):
+                    #if self.player_no == 0:
+                        #print(coin, " : removed   2")
+                    removed = True
+                    self.coins_pos.remove(coin)
                     break
-            return move_to(player = '2P',pred = pred)
-        else : 
-            x = ((ball_y - 83) // (-ball_speed_y)) + 1
-            pred = ball_x+(ball_speed_x*x) 
-            while True:
-                if pred > 198:
-                    pred = 396 - pred
-                elif pred < 3:
-                    pred = 6 - pred
-                else:
-                    break
-            return move_to(player = '2P',pred = pred)
-
-    # 2. Inform the game process that ml process is ready
-    comm.ml_ready()
-
-    # 3. Start an endless loop
-    while True:
-        # 3.1. Receive the scene information sent from the game process
-        scene_info = comm.recv_from_game()
-
-        # 3.2. If either of two sides wins the game, do the updating or
-        #      resetting stuff and inform the game process when the ml process
-        #      is ready.
-        if scene_info["status"] != "GAME_ALIVE":
-            # Do some updating or resetting stuff
-            ball_served = False
-
-            # 3.2.1 Inform the game process that
-            #       the ml process is ready for the next round
-            comm.ml_ready()
-            continue
-
-        # 3.3 Put the code here to handle the scene information
         
+        for coin in self.coins_pos:
+            if coin[1] < self.car_pos[1] + 60:
+                pick_this_coin = True
+                for car in self.other_players:
+                    if abs(car[0] - coin[0]) - 25 < abs(self.car_pos[0] - coin[0]) - 30 and abs(car[1] - coin[1]) - 45 < abs(self.car_pos[1] - coin[1]) - 55 \
+                        and abs(car[0] - coin[0]) - 25 < 15 and abs(car[1] - coin[1]) - 45 < 20:
+                        pick_this_coin = False
+                        break
+                """
+                if not(self.next_coin == ()):
+                    if abs(coin[0] - self.car_pos[0]) - abs(self.next_coin[0] - self.car_pos[0]) > 150:
+                        pick_this_coin = False
+                """
+                if pick_this_coin:
+                    self.next_coin = coin
+    
+    def look_around(self, scene_info: dict):
+        """
+                self.pos_2     self.pos_4
 
-        # 3.4 Send the instruction for this frame to the game process
-        blocker_record = scene_info["blocker"][0]
-        if not ball_served:
-            comm.send_to_game({"frame": scene_info["frame"], "command": "SERVE_TO_LEFT"})
-            ball_served = True
+        self.pos_1        mycar        self.pos_3
+
+        """
+        self.pos_1 = {}
+        self.pos_2 = {}
+        self.pos_3 = {}
+        self.pos_4 = {}
+        temp = []
+        for car in scene_info["cars_info"]:
+            if abs(car["pos"][0] - self.car_pos[0]) < 45 and\
+                car["pos"][1] < self.car_pos[1] - 77 and car["id"] != self.player_no:
+                temp.append(car)
+        if len(temp) != 0:
+            maxY2 = -999
+            maxY4 = -999
+            for car in temp:
+                if car["pos"][1] > maxY2 and car["pos"][0] <= self.car_pos[0]:
+                    maxY2 = car["pos"][1]
+                elif car["pos"][1] > maxY4 and car["pos"][0] > self.car_pos[0]:
+                    maxY4 = car["pos"][1]
+            for car in temp:
+                if car["pos"][1] == maxY2:
+                    self.pos_2.update(car)
+                elif car["pos"][1] == maxY4:
+                    self.pos_4.update(car)
+        temp = []
+        for car in scene_info["cars_info"]:
+            if car["pos"][0] - self.car_pos[0] >= 40 and car["pos"][0] - self.car_pos[0] < 80 and car["id"] != self.player_no:
+                if self.car_pos[1] >= (car["pos"][1] - 77) and car["pos"][1] >= self.car_pos[1] - 83:
+                    temp.append(car)
+                    if int(self.car_vel - car["velocity"]) > 0 and (self.car_pos[1] - car["pos"][1] - 83) > 0 and \
+                        ((self.car_pos[1] - car["pos"][1] - 83) / int(self.car_vel - car["velocity"])) * 3 > car["pos"][0] - self.car_pos[0] + 45:
+                        temp.remove(car)
+                    elif self.car_vel - car["velocity"] <= 0 and self.car_pos[1] - car["pos"][1] > 85:
+                        temp.remove(car)
+        if len(temp) != 0:
+            maxY = -999
+            for car in temp:
+                if car["pos"][1] > maxY:
+                    maxY = car["pos"][1]
+            for car in temp:
+                if car["pos"][1] == maxY:
+                    self.pos_3.update(car)
+                    break
+        temp = []
+        for car in scene_info["cars_info"]:
+            if self.car_pos[0] - car["pos"][0] >= 40 and self.car_pos[0] - car["pos"][0] < 80 and car["id"] != self.player_no:
+                if self.car_pos[1] >= (car["pos"][1] - 77) and car["pos"][1] >= self.car_pos[1] - 83:
+                    temp.append(car)
+                    if int(self.car_vel - car["velocity"]) > 0 and (self.car_pos[1] - car["pos"][1] - 83) > 0 and \
+                        ((self.car_pos[1] - car["pos"][1] - 83) / int(self.car_vel - car["velocity"])) * 3 > self.car_pos[0] - car["pos"][0] + 45:
+                        temp.remove(car)
+                    elif self.car_vel - car["velocity"] <= 0 and self.car_pos[1] - car["pos"][1] > 85:
+                        temp.remove(car)
+        if len(temp) != 0:
+            maxY = -999
+            for car in temp:
+                if car["pos"][1] > maxY:
+                    maxY = car["pos"][1]
+            for car in temp:
+                if car["pos"][1] == maxY:
+                    self.pos_1.update(car)
+                    break
+    
+    def move_y(self, dest : tuple, speed : int):
+        if "SPEED" in self.returnArr:
+            self.returnArr.remove("SPEED")
+        if dest[1] - self.car_pos[1] > 0 and speed > 0 and (dest[1] - self.car_pos[1] / speed) > 20:
+            self.returnArr.append("BRAKE")
+        elif dest[1] - self.car_pos[1] > 0 and speed <= 0:
+            self.returnArr.append("BRAKE")
+        elif dest[1] < self.car_pos[1] < dest[1] + 10:
+            self.returnArr.append("SPEED")
+        elif dest[1] - self.car_pos[1] < 0 and speed <= 0:
+            self.returnArr.append("SPEED")
+        elif dest[1] - self.car_pos[1] < 0 and speed > 0 and (-(dest[1] - self.car_pos[1]) / speed) * 3 > dest[0]:
+            self.returnArr.append("SPEED")
+        elif dest[1] - self.car_pos[1] < 0 and speed > 0 and (-(dest[1] - self.car_pos[1]) / speed) * 3 < dest[0]:
+            pass
+        
+    
+    def move_right(self):
+        self.returnArr.append("MOVE_RIGHT")
+        if self.pos_3 != {}:
+            if self.next_coin != () and self.next_coin[1] > self.pos_3["pos"][1] + 45:
+                if self.car_pos[1] > self.pos_3["pos"][1] :
+                    self.move_y((1000, self.pos_3["pos"][1] + 90), int(self.pos_3["velocity"] - self.car_vel))
+                    if self.pos_3["pos"][0] - self.car_pos[0] - 40 < 10:
+                        self.returnArr.remove("MOVE_RIGHT")
+                    elif self.pos_3["pos"][0] - self.car_pos[0] - 40 <= 6:
+                        self.returnArr.append("MOVE_LEFT")
+                    if self.car_pos[1] - self.pos_3["pos"][1] > 85:
+                        self.returnArr.append("MOVE_RIGHT")
+            elif self.pos_4 != {}:#both of pos4 and pos3 are occupied
+                if self.pos_3["pos"][1] - self.pos_4["pos"][1] - 80 - ((self.pos_3["pos"][0] - self.car_pos[0]) / 3) * int(self.pos_3["velocity"] - self.pos_4["velocity"]) > 60:# 從pos3上面過
+                    self.move_y((self.pos_3["pos"][0], self.pos_4["pos"][1] + 90), int(self.car_vel - self.pos_4["velocity"]))
+                    if self.pos_3["pos"][0] - self.car_pos[0] - 40 < 10:
+                        self.returnArr.remove("MOVE_RIGHT")
+                    elif self.pos_3["pos"][0] - self.car_pos[0] - 40 <= 6:
+                        self.returnArr.append("MOVE_LEFT")
+                else:#從pos3下面過
+                    self.move_y((self.pos_3["pos"][0], self.pos_3["pos"][1] + 90), int(self.pos_3["velocity"] - self.car_vel))
+                    if self.pos_3["pos"][0] - self.car_pos[0] - 40 < 10:
+                        self.returnArr.remove("MOVE_RIGHT")
+                    elif self.pos_3["pos"][0] - self.car_pos[0] - 40 <= 6:
+                        self.returnArr.append("MOVE_LEFT")
+                    if self.car_pos[1] - self.pos_3["pos"][1] > 85:
+                        self.returnArr.append("MOVE_RIGHT")
+            elif self.pos_2 != {}:#both of pos2 and pos3 are occupied，四不在
+                if self.pos_3["pos"][1] - self.pos_2["pos"][1] - 80 - ((self.pos_3["pos"][0] - self.car_pos[0]) / 3) * int(self.pos_3["velocity"] - self.pos_2["velocity"]) > 60:# 從pos3上面過
+                    self.move_y((self.pos_3["pos"][0], self.pos_2["pos"][1] + 90), int(self.car_vel - self.pos_2["velocity"]))
+                    if self.pos_3["pos"][0] - self.car_pos[0] - 40 < 10:
+                        self.returnArr.remove("MOVE_RIGHT")
+                    elif self.pos_3["pos"][0] - self.car_pos[0] - 40 <= 6:
+                        self.returnArr.append("MOVE_LEFT")
+                else:#從pos3下面過
+                    self.move_y((self.pos_3["pos"][0], self.pos_3["pos"][1] + 90), int(self.pos_3["velocity"] - self.car_vel))
+                    if self.pos_3["pos"][0] - self.car_pos[0] - 40 < 10:
+                        self.returnArr.remove("MOVE_RIGHT")
+                    elif self.pos_3["pos"][0] - self.car_pos[0] - 40 <= 6:
+                        self.returnArr.append("MOVE_LEFT")
+                    if self.car_pos[1] - self.pos_3["pos"][1] > 85:
+                        self.returnArr.append("MOVE_RIGHT")
+            else:# 從pos3上面過
+                self.move_y((self.pos_3["pos"][0], self.pos_3["pos"][1] - 1000), 0)
+                if self.pos_3["pos"][0] - self.car_pos[0] - 40 < 10:
+                        self.returnArr.remove("MOVE_RIGHT")
+                elif self.pos_3["pos"][0] - self.car_pos[0] - 40 <= 6:
+                    self.returnArr.append("MOVE_LEFT")
         else:
-            
-            if side == "1P":
-                command = ml_loop_for_1P()
+            if self.pos_4 != {} and self.pos_2 != {}:
+                if self.pos_4["pos"][1] > self.pos_2["pos"][1]:
+                    self.move_y((1000, self.pos_4["pos"][1] + 90), int(self.car_vel - self.pos_4["velocity"]))
+                else:
+                    self.move_y((1000, self.pos_2["pos"][1] + 90), int(self.car_vel - self.pos_2["velocity"]))
+            elif self.pos_4 != {}:
+                self.move_y((1000, self.pos_4["pos"][1] + 90), int(self.car_vel - self.pos_4["velocity"]))
+            elif self.pos_2 != {}:
+                self.move_y((1000, self.pos_2["pos"][1] + 90), int(self.car_vel - self.pos_2["velocity"]))
             else:
-                command = ml_loop_for_2P()
+                self.move_y((1000, 0), 0)
+    
+    def move_left(self):
+        self.returnArr.append("MOVE_LEFT")
+        if self.pos_1 != {}:
+            if self.next_coin != () and self.next_coin[1] > self.pos_1["pos"][1] + 45:
+                if self.car_pos[1] > self.pos_1["pos"][1]:
+                    self.move_y((-1000, self.pos_1["pos"][1] + 90), int(self.pos_1["velocity"] - self.car_vel))
+                    if self.car_pos[0] - self.pos_1["pos"][0] - 40 < 10:
+                        self.returnArr.remove("MOVE_LEFT")
+                    elif self.car_pos[0] - self.pos_1["pos"][0] - 40 <= 6:
+                        self.returnArr.append("MOVE_RIGHT")
+                    if self.car_pos[1] - self.pos_1["pos"][1] > 85:
+                        self.returnArr.append("MOVE_LEFT")
+            elif self.pos_4 != {}:#both of pos4 and pos1 are occupied
+                if self.pos_1["pos"][1] - self.pos_4["pos"][1] - 80 - ((self.pos_1["pos"][0] - self.car_pos[0]) / 3) * int(self.pos_1["velocity"] - self.pos_4["velocity"]) > 60:# 從pos1上面過
+                    self.move_y((self.pos_1["pos"][0], self.pos_4["pos"][1] + 90), int(self.car_vel - self.pos_4["velocity"]))
+                    if self.car_pos[0] - self.pos_1["pos"][0] - 40 < 10:
+                        self.returnArr.remove("MOVE_LEFT")
+                    elif self.car_pos[0] - self.pos_1["pos"][0] - 40 <= 6:
+                        self.returnArr.append("MOVE_RIGHT")
+                else:#從pos1下面過
+                    self.move_y((self.pos_1["pos"][0], self.pos_1["pos"][1] + 90), int(self.pos_1["velocity"] - self.car_vel))
+                    if self.car_pos[0] - self.pos_1["pos"][0] - 40 < 10:
+                        self.returnArr.remove("MOVE_LEFT")
+                    elif self.car_pos[0] - self.pos_1["pos"][0] - 40 <= 6:
+                        self.returnArr.append("MOVE_RIGHT")
+                    if self.car_pos[1] - self.pos_1["pos"][1] > 85:
+                        self.returnArr.append("MOVE_LEFT")
+            elif self.pos_2 != {}:#both of pos2 and pos3 are occupied，四不在
+                if self.pos_1["pos"][1] - self.pos_2["pos"][1] - 80 - ((self.pos_1["pos"][0] - self.car_pos[0]) / 3) * int(self.pos_1["velocity"] - self.pos_2["velocity"]) > 60:# 從pos3上面過
+                    self.move_y((self.pos_1["pos"][0], self.pos_2["pos"][1] + 90), int(self.car_vel - self.pos_2["velocity"]))
+                    if self.car_pos[0] - self.pos_1["pos"][0] - 40 < 10:
+                        self.returnArr.remove("MOVE_LEFT")
+                    elif self.car_pos[0] - self.pos_1["pos"][0] - 40 <= 6:
+                        self.returnArr.append("MOVE_RIGHT")
+                else:#從pos3下面過
+                    self.move_y((self.pos_1["pos"][0], self.pos_1["pos"][1] + 90), int(self.pos_1["velocity"] - self.car_vel))
+                    if self.car_pos[0] - self.pos_1["pos"][0] - 40 < 10:
+                        self.returnArr.remove("MOVE_LEFT")
+                    elif self.car_pos[0] - self.pos_1["pos"][0] - 40 <= 6:
+                        self.returnArr.append("MOVE_RIGHT")
+                    if self.car_pos[1] - self.pos_1["pos"][1] > 85:
+                        self.returnArr.append("MOVE_LEFT")
+            else:# 從pos3上面過
+                self.move_y((self.pos_1["pos"][0], self.pos_1["pos"][1] - 1000), 0)
+                if self.car_pos[0] - self.pos_1["pos"][0] - 40 < 10:
+                    self.returnArr.remove("MOVE_LEFT")
+                elif self.car_pos[0] - self.pos_1["pos"][0] - 40 <= 6:
+                    self.returnArr.append("MOVE_RIGHT")
+        else:
+            if self.pos_4 != {} and self.pos_2 != {}:
+                if self.pos_4["pos"][1] > self.pos_2["pos"][1]:
+                    self.move_y((-1000, self.pos_4["pos"][1] + 90), int(self.car_vel - self.pos_4["velocity"]))
+                else:
+                    self.move_y((-1000, self.pos_2["pos"][1] + 90), int(self.car_vel - self.pos_2["velocity"]))
+            elif self.pos_4 != {}:
+                self.move_y((-1000, self.pos_4["pos"][1] + 90), int(self.car_vel - self.pos_4["velocity"]))
+            elif self.pos_2 != {}:
+                self.move_y((-1000, self.pos_2["pos"][1] + 90), int(self.car_vel - self.pos_2["velocity"]))
+            else:
+                self.move_y((-1000, 0), 0)
+    
+    
+    def move(self):
+        self.returnArr = []
+        self.returnArr.append("SPEED")
+        if self.next_coin != ():
+            if self.next_coin[0] > self.car_pos[0] + 15:
+                self.move_right()
+            elif self.next_coin[0] < self.car_pos[0] - 15:
+                self.move_left()
+        if not("MOVE_LEFT" in self.returnArr or "MOVE_RIGHT" in self.returnArr):#繞路還沒寫完
+            if self.pos_2 != {} and self.pos_4 == {} and self.car_pos[1] - self.pos_2["pos"][1] - 80 < 120:
+                self.move_right()
+            elif self.pos_4 != {} and self.pos_2 == {} and self.car_pos[1] - self.pos_4["pos"][1] - 80 < 120:
+                self.move_left()
+            elif self.pos_2 != {} and self.pos_4 != {}:
+                if self.car_pos[1] - self.pos_2["pos"][1] - 80 < 120:
+                    if self.car_pos[1] - self.pos_4["pos"][1] - 80 > 200:
+                        self.move_right()
+                    else:
+                        self.move_left()
+                elif self.car_pos[1] - self.pos_4["pos"][1] - 80 < 120:
+                    if self.car_pos[1] - self.pos_2["pos"][1] - 80 > 200:
+                        self.move_left()
+                    else:
+                        self.move_right()
+    """
+    def move(self):
+        self.returnArr = []
+        self.returnArr.append("SPEED")
+        if self.next_coin != ():
+            if self.next_coin[0] > self.car_pos[0] + 15:
+                self.returnArr.append("MOVE_RIGHT")
+            elif self.next_coin[0] < self.car_pos[0] - 15:
+                self.returnArr.append("MOVE_LEFT")
+        if "MOVE_RIGHT" in self.returnArr and self.pos_3 != {} and self.pos_3["pos"][0] - self.car_pos[0] - 40 < 10:
+            self.returnArr.remove("MOVE_RIGHT")
+        elif "MOVE_LEFT" in self.returnArr and self.pos_1 != {} and self.car_pos[0] - self.pos_1["pos"][0] - 40 < 10:
+            self.returnArr.remove("MOVE_LEFT")
+        if self.pos_3 != {} and self.pos_3["pos"][0] - self.car_pos[0] - 40 <= 6:
+            self.returnArr.append("MOVE_LEFT")
+        elif self.pos_1 != {} and self.car_pos[0] - self.pos_1["pos"][0] - 40 <= 6:
+            self.returnArr.append("MOVE_RIGHT")
+    """
 
-            if command == 0:
-                comm.send_to_game({"frame": scene_info["frame"], "command": "NONE"})
-            elif command == 1:
-                comm.send_to_game({"frame": scene_info["frame"], "command": "MOVE_RIGHT"})
-            else :
-                comm.send_to_game({"frame": scene_info["frame"], "command": "MOVE_LEFT"})
+    def update(self, scene_info: dict):
+        """
+        Generate the command according to the received scene information
+        """
+        if scene_info["status"] != "ALIVE":
+            return "RESET"
+        
+        if len(scene_info[self.player]) != 0:
+            self.car_pos = scene_info[self.player]
+            self.other_players = []
+            for car in scene_info["cars_info"]:
+                if car["id"] == self.player_no:
+                    self.car_vel = car["velocity"]
+                    self.coin_num = car["coin_num"]
+                elif car["id"] < 100:
+                    self.other_players.append(car["pos"])
+            self.computer_cars = scene_info["computer_cars"]
+            if scene_info.__contains__("coins"):
+                self.coins_pos = scene_info["coins"]
+            self.find_coin()
+            self.look_around(scene_info)
+            self.move()
+
+        
+        if self.car_vel >= 0:
+            if self.player_no == 0:
+                print(self.player, " ", self.car_pos, " ", scene_info["frame"], "\npos1 = ", self.pos_1, "pos2 = ", self.pos_2, "pos4 = ", self.pos_4, "pos3 = ", self.pos_3)
+                #print(self.other_players)
+                #print("pos1 = ", self.pos_1, "pos2 = ", self.pos_2, "pos4 = ", self.pos_4, "pos3 = ", self.pos_3)
+                #print(self.player, " : ", self.next_coin, " ", scene_info["frame"])
+        
+        return self.returnArr
+
+    def reset(self):
+        """
+        Reset the status
+        """
+        print("reset ml script")
+        pass
